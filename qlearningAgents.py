@@ -38,9 +38,9 @@ class QLearningAgent(ReinforcementAgent):
           terminal state, you should return a value of 0.0.
         """
         legal_actions = self.getLegalActions(state)
-        if not legal_actions:
+        if not legal_actions:  # terminal state
             return 0.0
-        return self.getMaxQ(state)[1]
+        return self.get_max_q(state)[1]
 
     def getPolicy(self, state):
         """
@@ -51,7 +51,7 @@ class QLearningAgent(ReinforcementAgent):
         legal_actions = self.getLegalActions(state)
         if not legal_actions:
             return None
-        return self.getMaxQ(state)[0]
+        return self.get_max_q(state)[0]
 
     def getAction(self, state):
         """
@@ -82,19 +82,25 @@ class QLearningAgent(ReinforcementAgent):
       it will be called on your behalf
     """
         "*** YOUR CODE HERE ***"
-        self.q[(state, action)] = self.getQValue(state, action) + self.alpha * \
-                                  (reward + self.discount * self.getMaxQ(nextState)[1] - self.getQValue(state, action))
+        self.q[(state, action)] += self.alpha * (
+                reward + self.discount * self.get_max_q(nextState)[1] - self.q[(state, action)])
 
-    def getMaxQ(self, state):
+    def get_max_q(self, state):
+        """
+        Gets the max q value (action, value) pair of current state
+        :param state: current state
+        :return: (action, value) pair of max q value
+        """
         max_q = float("-inf")
         max_action = []
-        if not self.getLegalActions(state):
+        if not self.getLegalActions(state):  # terminal state
             return None, 0.0
         for action in self.getLegalActions(state):
-            if self.getQValue(state, action) == max_q:
+            q_value = self.getQValue(state, action)
+            if q_value == max_q:  # add for tie breaking
                 max_action.append(action)
-            if self.getQValue(state, action) > max_q:
-                max_q = self.getQValue(state, action)
+            if q_value > max_q:  # new max q value
+                max_q = q_value
                 max_action = [action]
         return random.choice(max_action), max_q
 
@@ -145,7 +151,6 @@ class ApproximateQAgent(PacmanQAgent):
         PacmanQAgent.__init__(self, **args)
         self.w = util.Counter()
 
-
         # You might want to initialize weights here.
         "*** YOUR CODE HERE ***"
 
@@ -166,7 +171,6 @@ class ApproximateQAgent(PacmanQAgent):
         features = self.featExtractor.getFeatures(state, action)
         for feature in features:
             self.w[feature] += self.alpha * correction * features[feature]
-
 
     def final(self, state):
         "Called at the end of each game."
